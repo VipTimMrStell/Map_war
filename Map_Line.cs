@@ -15,10 +15,7 @@ namespace Map_war
         public Map_Line(List<Point> points, Color color)
         {
             this.Points = points ?? new List<Point>();
-            this.color = color;
-            if(color == null){
-                this.color = Color.Black;
-            }
+            this.color = color.IsEmpty ? Color.Black : color;
         }
     }
 

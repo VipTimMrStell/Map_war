@@ -11,7 +11,7 @@ namespace Map_war
     internal class LineHandler
     {
 
-        public bool DeleteLine(List<Map_Line> lines, Point tapPoint, PictureBox picture_map, float threshold = 150)
+        public bool DeleteLine(List<Map_Line> lines, Point tapPoint, PictureBox picture_map, float threshold = 15)
         {
             Image img = picture_map.Image;
             if (img == null)
@@ -33,10 +33,14 @@ namespace Map_war
 
             int offsetX = (pbWidth - displayedWidth) / 2;
             int offsetY = (pbHeight - displayedHeight) / 2;
+            // Переводим координаты клика из координат PictureBox в координаты изображения
             int x = tapPoint.X - offsetX;
             int y = tapPoint.Y - offsetY;
-            Console.WriteLine($"tp 1 {tapPoint}");
-            tapPoint = new Point(x, y);
+            if (displayedWidth <= 0 || displayedHeight <= 0) return false;
+            float ratio = Math.Min((float)pbWidth / imgWidth, (float)pbHeight / imgHeight);
+            int imgX = (int)(x / ratio);
+            int imgY = (int)(y / ratio);
+            tapPoint = new Point(imgX, imgY);
 
             for (int i = 0; i < lines.Count; i++)
             {

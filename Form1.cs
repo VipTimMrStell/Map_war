@@ -41,6 +41,10 @@ namespace Map_war
         private string name_znak;
         // изображение, которое будем рисовать по клику       
         Image overlayImage;
+        // Выделение области для удаления
+        private bool isSelectingDelete = false;
+        private Point selectionStartClient;
+        private Point selectionEndClient;
 
         public Form1()
         {
@@ -54,9 +58,10 @@ namespace Map_war
             panel_map.MouseMove += panel_map_MouseMove;
             panel_map.MouseDown += panel_map_MouseDown;
             panel_map.MouseUp += panel_map_MouseUp;
-            //picture_map.Paint += picture_map_Paint;
+            picture_map.Paint += picture_map_Paint;
             picture_map.Location = new Point(0, 0);
             panel_map.Controls.Add(picture_map);
+            picture_map.MouseUp += picture_map_MouseUp;
         }
 
         private void UpdateScrollBars()
@@ -150,6 +155,8 @@ namespace Map_war
             {
                 isDragging = true;
                 dragStartPosition = e.Location;
+                // Запоминаем текущие позиции скролла для корректного перетаскивания
+                scrollStartPosition = new Point(panel_map.HorizontalScroll.Value, panel_map.VerticalScroll.Value);
                 panel_map.Cursor = Cursors.SizeAll;
             }
         }
@@ -214,7 +221,6 @@ namespace Map_war
 
         private void Draw_Line(Map_Line line)
         {
-
             Image img = picture_map.Image;
             if (img == null)
             {
@@ -222,46 +228,17 @@ namespace Map_war
                 return;
             }
 
-            int pbWidth = picture_map.Width;
-            int pbHeight = picture_map.Height;
-            int imgWidth = img.Width;
-            int imgHeight = img.Height;
-
-            float ratioWidth = (float)pbWidth / imgWidth;
-            float ratioHeight = (float)pbHeight / imgHeight;
-            float ratio = Math.Min(ratioWidth, ratioHeight);
-
-            int displayedWidth = (int)(imgWidth * ratio);
-            int displayedHeight = (int)(imgHeight * ratio);
-
-            int offsetX = (pbWidth - displayedWidth) / 2;
-            int offsetY = (pbHeight - displayedHeight) / 2;
-            Console.WriteLine($"start foreach ");
-
             Bitmap bmp = new Bitmap(picture_map.Image);
-            Console.WriteLine($"Draw line start");
-            for (var i = 1; i < line.Points.Count; i++)
+            using (Graphics g = Graphics.FromImage(bmp))
             {
-                int x = line.Points[i].X - offsetX;
-                int y = line.Points[i].Y - offsetY;
-
-                float imageX = x / ratio;
-                float imageY = y / ratio;
-
-                //Point currentLinePoint = new Point((int)imageX, (int)imageY);
-
-                //tmpLine.Add(currentLinePoint);
-                
-
-                using (Graphics g = Graphics.FromImage(bmp))
+                var penColor = line.color.IsEmpty ? Color.Black : line.color;
+                using (var pen = new Pen(penColor, 10))
                 {
-                   
-                    Console.WriteLine($"Draw line, tmpline: {line.Points[i].X} {line.Points[i].Y}");
-                    color_line = line.color;
-                    drawingPen = new Pen(color_line, 10);
-                    g.DrawLine(drawingPen, line.Points[i].X, line.Points[i].Y, line.Points[i- 1].X, line.Points[i - 1].Y);             
+                    for (var i = 1; i < line.Points.Count; i++)
+                    {
+                        g.DrawLine(pen, line.Points[i - 1], line.Points[i]);
+                    }
                 }
-                
             }
             if (picture_map.Image != null)
             {
@@ -282,8 +259,8 @@ namespace Map_war
             int imgWidth = picture_map.Image.Width;
             int imgHeight = picture_map.Image.Height;
 
-            int pbWidth = picture_map.Width;
-            int pbHeight = picture_map.Height;
+            int pbWidth = picture_map.Width - picture_map.Padding.Horizontal;
+            int pbHeight = picture_map.Height - picture_map.Padding.Vertical;
 
             float imageAspect = (float)imgWidth / imgHeight;
             float controlAspect = (float)pbWidth / pbHeight;
@@ -294,20 +271,48 @@ namespace Map_war
             if (imageAspect > controlAspect)
             {
                 scaleFactor = (float)pbWidth / imgWidth;
-                offsetX = 0;
-                offsetY = (int)((pbHeight - imgHeight * scaleFactor) / 2);
+                offsetX = picture_map.Padding.Left;
+                offsetY = picture_map.Padding.Top + (int)((pbHeight - imgHeight * scaleFactor) / 2);
             }
             else
             {
                 scaleFactor = (float)pbHeight / imgHeight;
-                offsetX = (int)((pbWidth - imgWidth * scaleFactor) / 2);
-                offsetY = 0;
+                offsetX = picture_map.Padding.Left + (int)((pbWidth - imgWidth * scaleFactor) / 2);
+                offsetY = picture_map.Padding.Top;
             }
 
             int x = (int)((coordinates.X - offsetX) / scaleFactor);
             int y = (int)((coordinates.Y - offsetY) / scaleFactor);
 
             return new Point(x, y);
+        }
+
+        private Rectangle GetImageRectFromClientPoints(Point clientA, Point clientB)
+        {
+            Point a = TranslateZoomMousePosition(clientA);
+            Point b = TranslateZoomMousePosition(clientB);
+            int x = Math.Min(a.X, b.X);
+            int y = Math.Min(a.Y, b.Y);
+            int w = Math.Abs(a.X - b.X);
+            int h = Math.Abs(a.Y - b.Y);
+            return new Rectangle(x, y, w, h);
+        }
+
+        private void picture_map_Paint(object sender, PaintEventArgs e)
+        {
+            if (isSelectingDelete)
+            {
+                var rc = new Rectangle(
+                    Math.Min(selectionStartClient.X, selectionEndClient.X),
+                    Math.Min(selectionStartClient.Y, selectionEndClient.Y),
+                    Math.Abs(selectionStartClient.X - selectionEndClient.X),
+                    Math.Abs(selectionStartClient.Y - selectionEndClient.Y));
+                using (var pen = new Pen(Color.Red, 1))
+                {
+                    pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                    e.Graphics.DrawRectangle(pen, rc);
+                }
+            }
         }
 
         // поставить текст
@@ -354,6 +359,7 @@ namespace Map_war
             currentMapData.Map = "СВЕТЛОВ";
             picture_map.Image = currentMapData.Get_Map();
             panel_map.MouseWheel += panel1_MouseWheel;
+            UpdateScrollBars();
             Add_Dictionary();
         }
 
@@ -372,7 +378,6 @@ namespace Map_war
         }
         private void panel1_MouseWheel(object sender, MouseEventArgs e)
         {
-            ((HandledMouseEventArgs)e).Handled = true;
             Point currentScrollPos = new Point(panel_map.HorizontalScroll.Value, panel_map.VerticalScroll.Value);
             // Инвертируем скролл-позицию
             int scrollX = -currentScrollPos.X;
@@ -433,12 +438,11 @@ namespace Map_war
 
                 if (isDeletedLine)
                 {
-                    Console.WriteLine($"before {currentMapData.Lines.Count}");
-                    var result = lineHandler.DeleteLine(currentMapData.Lines, new Point(e.X, e.Y), picture_map);
-                    Console.WriteLine(result);
-                    Console.WriteLine($"after {currentMapData.Lines.Count}");
-                    picture_map.Image = currentMapData.Get_Map();   
-                    UpdateLinesUI();
+                    // Начинаем выделение области для удаления маршрутов
+                    isSelectingDelete = true;
+                    selectionStartClient = e.Location;
+                    selectionEndClient = e.Location;
+                    picture_map.Invalidate();
                 }
                 else if (isDrawingLine)
                 {
@@ -446,7 +450,11 @@ namespace Map_war
                 }
                 else if (isDeletedMode)
                 {
-                    Delete_Obg_on_Map(e);
+                    // Начинаем выделение области для удаления объектов
+                    isSelectingDelete = true;
+                    selectionStartClient = e.Location;
+                    selectionEndClient = e.Location;
+                    picture_map.Invalidate();
                 }
                 else if (use_text)
                 {
@@ -497,7 +505,7 @@ namespace Map_war
             {
                 if (tmpLine.Count > 1)
                 {
-                    if (color_line != null)
+                    if (!color_line.IsEmpty)
                         drawingPen = new Pen(color_line, 10);
                     g.DrawLine(drawingPen, tmpLine[tmpLine.Count - 1].X, tmpLine[tmpLine.Count - 1].Y, tmpLine[tmpLine.Count - 2].X, tmpLine[tmpLine.Count - 2].Y);
                 }
@@ -609,6 +617,40 @@ namespace Map_war
                     tmpLine.Add(point);
                     picture_map.Invalidate();
                 }
+            }
+            else if (isSelectingDelete && (isDeletedMode || isDeletedLine) && e.Button == MouseButtons.Left)
+            {
+                selectionEndClient = e.Location;
+                picture_map.Invalidate();
+            }
+        }
+
+        private void picture_map_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (isSelectingDelete && e.Button == MouseButtons.Left)
+            {
+                var rect = GetImageRectFromClientPoints(selectionStartClient, selectionEndClient);
+                // Если почти клик — делаем небольшой прямоугольник
+                if (rect.Width < 4 && rect.Height < 4)
+                {
+                    var p = TranslateZoomMousePosition(selectionStartClient);
+                    rect = new Rectangle(p.X - 4, p.Y - 4, 8, 8);
+                }
+
+                if (isDeletedLine)
+                {
+                    DeleteLinesInRect(rect);
+                }
+                else if (isDeletedMode)
+                {
+                    DeleteObjectsInRect(rect);
+                }
+
+                isSelectingDelete = false;
+                picture_map.Image = currentMapData.Get_Map();
+                UpdateMarkersUI(currentMapData.Markers);
+                UpdateTextsUI(currentMapData.Texts);
+                UpdateLinesUI();
             }
         }
 
@@ -770,6 +812,7 @@ namespace Map_war
         private void DelButtonMain_Click(object sender, EventArgs e)
         {
             isDeletedMode = !isDeletedMode;
+            if (isDeletedMode) { isDeletedLine = false; }
             drawLineButton.BackColor = Color.White;
             DelButtonMain.BackColor = Color.Gray;
             button_Open_panel_own.BackColor = Color.White;
@@ -862,12 +905,100 @@ namespace Map_war
             {
                 isDeletedLine = true;
                 DeleteLine.BackColor = Color.Gray;
+                isDeletedMode = false;
             }
             else
             {
                 isDeletedLine = false;
                 DeleteLine.BackColor = Color.White;
             }
+        }
+
+        private void DeleteLinesInRect(Rectangle imgRect)
+        {
+            for (int i = currentMapData.Lines.Count - 1; i >= 0; i--)
+            {
+                var line = currentMapData.Lines[i];
+                bool intersects = false;
+                if (line.Points.Any(pt => imgRect.Contains(pt)))
+                {
+                    intersects = true;
+                }
+                else
+                {
+                    for (int j = 1; j < line.Points.Count && !intersects; j++)
+                    {
+                        if (SegmentIntersectsRectangle(line.Points[j - 1], line.Points[j], imgRect))
+                            intersects = true;
+                    }
+                }
+                if (intersects)
+                {
+                    currentMapData.Lines.RemoveAt(i);
+                }
+            }
+        }
+
+        private void DeleteObjectsInRect(Rectangle imgRect)
+        {
+            for (int i = currentMapData.Markers.Count - 1; i >= 0; i--)
+            {
+                var m = currentMapData.Markers[i];
+                if (imgRect.Contains((int)m.Pos_X, (int)m.Pos_Y))
+                {
+                    currentMapData.Markers.RemoveAt(i);
+                }
+            }
+            for (int i = currentMapData.Texts.Count - 1; i >= 0; i--)
+            {
+                var t = currentMapData.Texts[i];
+                if (imgRect.Contains(t.Position))
+                {
+                    currentMapData.Texts.RemoveAt(i);
+                }
+            }
+        }
+
+        private bool SegmentIntersectsRectangle(Point a, Point b, Rectangle r)
+        {
+            if (r.Contains(a) || r.Contains(b)) return true;
+            var r1 = new Point(r.Left, r.Top);
+            var r2 = new Point(r.Right, r.Top);
+            var r3 = new Point(r.Right, r.Bottom);
+            var r4 = new Point(r.Left, r.Bottom);
+            return SegmentsIntersect(a, b, r1, r2) ||
+                   SegmentsIntersect(a, b, r2, r3) ||
+                   SegmentsIntersect(a, b, r3, r4) ||
+                   SegmentsIntersect(a, b, r4, r1);
+        }
+
+        private static int Orientation(Point p, Point q, Point r)
+        {
+            long val = (long)(q.Y - p.Y) * (r.X - q.X) - (long)(q.X - p.X) * (r.Y - q.Y);
+            if (val == 0) return 0;
+            return (val > 0) ? 1 : 2;
+        }
+
+        private static bool OnSegment(Point p, Point q, Point r)
+        {
+            return q.X <= Math.Max(p.X, r.X) && q.X >= Math.Min(p.X, r.X) &&
+                   q.Y <= Math.Max(p.Y, r.Y) && q.Y >= Math.Min(p.Y, r.Y);
+        }
+
+        private static bool SegmentsIntersect(Point p1, Point q1, Point p2, Point q2)
+        {
+            int o1 = Orientation(p1, q1, p2);
+            int o2 = Orientation(p1, q1, q2);
+            int o3 = Orientation(p2, q2, p1);
+            int o4 = Orientation(p2, q2, q1);
+
+            if (o1 != o2 && o3 != o4) return true;
+
+            if (o1 == 0 && OnSegment(p1, p2, q1)) return true;
+            if (o2 == 0 && OnSegment(p1, q2, q1)) return true;
+            if (o3 == 0 && OnSegment(p2, p1, q2)) return true;
+            if (o4 == 0 && OnSegment(p2, q1, q2)) return true;
+            return false;
         }
     }
 }
