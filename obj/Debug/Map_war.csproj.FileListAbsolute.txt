@@ -1,0 +1,26 @@
+C:\Users\arsue\Рабочий стол\Map_war\bin\Debug\Map_war.exe.config
+C:\Users\arsue\Рабочий стол\Map_war\bin\Debug\Map_war.exe
+C:\Users\arsue\Рабочий стол\Map_war\bin\Debug\Map_war.pdb
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.csproj.AssemblyReference.cache
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.Form1.resources
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.Properties.Resources.resources
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.csproj.GenerateResource.cache
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.csproj.CoreCompileInputs.cache
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.exe
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.pdb
+C:\Users\arsue\Рабочий стол\Map_war\bin\Debug\Newtonsoft.Json.dll
+C:\Users\arsue\Рабочий стол\Map_war\bin\Debug\Newtonsoft.Json.xml
+C:\Users\arsue\Рабочий стол\Map_war\obj\Debug\Map_war.csproj.CopyComplete
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\bin\Debug\Map_war.exe.config
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\bin\Debug\Map_war.exe
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\bin\Debug\Map_war.pdb
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\bin\Debug\Newtonsoft.Json.dll
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\bin\Debug\Newtonsoft.Json.xml
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.csproj.AssemblyReference.cache
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.Form1.resources
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.Properties.Resources.resources
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.csproj.GenerateResource.cache
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.csproj.CoreCompileInputs.cache
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.csproj.CopyComplete
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.exe
+C:\Users\arsue\OneDrive\Документы\GitHub\Map_war\obj\Debug\Map_war.pdb
